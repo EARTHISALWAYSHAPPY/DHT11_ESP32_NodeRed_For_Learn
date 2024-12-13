@@ -1,18 +1,20 @@
-#include <Arduino.h>
-
-// put function declarations here:
-int myFunction(int, int);
-
+#include <DHT11.h>
+DHT11 dht11(5);
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+    Serial.begin(9600);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-}
-
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+    int temperature = 0;
+    int humidity = 0;
+    int result = dht11.readTemperatureHumidity(temperature, humidity);
+    if (result == 0) {
+        Serial.print("Temperature: ");
+        Serial.print(temperature);
+        Serial.print(" °C\tHumidity: ");
+        Serial.print(humidity);
+        Serial.println(" %");
+    } else {
+        Serial.println(DHT11::getErrorString(result));
+    }
 }
