@@ -4,11 +4,11 @@
 #include <DHT.h>
 #include <DHT_U.h>
 
-#define WIFI_SSID "Pee Kub_2.4G"
-#define WIFI_PASSWORD "Pee1542547"
+#define WIFI_SSID "--------------"
+#define WIFI_PASSWORD "--------------"
 
-#define MQTT_HOST "--------------"
-#define MQTT_PORT 1883
+#define MQTT_SERVER "broker.hivemq.com"
+
 WiFiClient espClient;
 PubSubClient client(espClient);
 
@@ -16,39 +16,71 @@ PubSubClient client(espClient);
 #define DHTTYPE DHT11
 DHT dht(DHTPIN, DHTTYPE);
 
-uint32_t delayMS;
-
+void reconnect()
+{
+  while (!client.connected())
+  {
+    Serial.print(F("!!!!!......"));
+    if (client.connect("ESP32Client"))
+    {
+      Serial.println(F("Connected to MQTT"));
+      client.subscribe("World_Humidity_XYZ");
+      client.subscribe("World_Temp_XYZ");
+      client.subscribe("World_F_Temp_XYZ");
+    }
+    else
+    {
+      Serial.print(F("Failed, rc="));
+      Serial.print(client.state());
+      Serial.println(F(" try again in 5 seconds"));
+      delay(1000);
+    }
+  }
+}
 void setup()
 {
-    Serial.begin(115200);
-    dht.begin();
-    // WiFi.mode(WIFI_STA);
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        delay(100);
-        Serial.print(F("."));
-    }
-    Serial.println(F("Connected Done!!!"));
-    delay(2000);
+  Serial.begin(115200);
+  dht.begin();
+  client.setServer(MQTT_SERVER, 1883);
+  // WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(100);
+    Serial.print(F("."));
+  }
+  Serial.println(F("Connected Done!!!"));
+  delay(5000);
 }
 
 void loop()
-{   
-  delay(1000);
-  float h = dht.readHumidity();
-  float t = dht.readTemperature();
-  float f = dht.readTemperature(true);
+{
+  if (!client.connected())
+  {
+    reconnect();
+  }
+  client.loop();
 
-  if (isnan(h) || isnan(t) || isnan(f)) {
+  float humidity = dht.readHumidity();
+  float temperature = dht.readTemperature();
+  float f_temperature = dht.readTemperature(true);
+
+  client.publish("World_Humidity_XYZ", String(humidity).c_str(), false);
+  client.publish("World_Temp_XYZ", String(temperature).c_str(), false);
+  client.publish("World_F_Temp_XYZ", String(f_temperature).c_str(), false);
+  Serial.print(F("Humidity: "));
+  Serial.print(humidity);
+  Serial.print(F("%  Temperature: "));
+  Serial.print(temperature);
+  Serial.print(F("°C "));
+  Serial.print(f_temperature);
+  Serial.println(F("°F"));
+
+  if (isnan(humidity) || isnan(temperature) || isnan(f_temperature))
+  {
     Serial.println(F("Failed to read from DHT sensor!"));
     return;
   }
-  Serial.print(F("Humidity: "));
-  Serial.print(h);
-  Serial.print(F("%  Temperature: "));
-  Serial.print(t);
-  Serial.print(F("°C "));
-  Serial.print(f);
-  Serial.println(F("°F"));
+
+  delay(10000);
 }
