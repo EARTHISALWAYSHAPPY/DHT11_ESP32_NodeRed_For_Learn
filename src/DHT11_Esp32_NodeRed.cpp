@@ -24,9 +24,10 @@ void reconnect()
     if (client.connect("ESP32Client"))
     {
       Serial.println(F("Connected to MQTT"));
-      client.subscribe("World_Humidity_XYZ");
-      client.subscribe("World_Temp_XYZ");
-      client.subscribe("World_F_Temp_XYZ");
+      // Set youe Topic For subscribe
+      client.subscribe("--------------"); //<---
+      client.subscribe("--------------"); //<---
+      client.subscribe("--------------"); //<---
     }
     else
     {
@@ -55,6 +56,7 @@ void setup()
 
 void loop()
 {
+  //reconnect
   if (!client.connected())
   {
     reconnect();
@@ -65,9 +67,12 @@ void loop()
   float temperature = dht.readTemperature();
   float f_temperature = dht.readTemperature(true);
 
-  client.publish("World_Humidity_XYZ", String(humidity).c_str(), false);
-  client.publish("World_Temp_XYZ", String(temperature).c_str(), false);
-  client.publish("World_F_Temp_XYZ", String(f_temperature).c_str(), false);
+  // Set youe Topic For publish
+  client.publish("--------------", String(humidity).c_str(), false);      //<---
+  client.publish("--------------", String(temperature).c_str(), false);   //<---
+  client.publish("--------------", String(f_temperature).c_str(), false); //<---
+
+  //For Serialmonitor
   Serial.print(F("Humidity: "));
   Serial.print(humidity);
   Serial.print(F("%  Temperature: "));
@@ -76,6 +81,7 @@ void loop()
   Serial.print(f_temperature);
   Serial.println(F("°F"));
 
+  //if DHT11 failed//
   if (isnan(humidity) || isnan(temperature) || isnan(f_temperature))
   {
     Serial.println(F("Failed to read from DHT sensor!"));
